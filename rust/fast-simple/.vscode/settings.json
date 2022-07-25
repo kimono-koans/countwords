@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "allocs",
+        "bumpalo",
         "countwords",
         "fxhash",
         "hashbrown",
