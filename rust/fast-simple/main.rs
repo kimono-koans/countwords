@@ -19,13 +19,9 @@ use std::{
 //
 // N.B. This crate brings in a new hashing function. We still use std's hashmap
 // implementation.
-use hashbrown::{hash_map::DefaultHashBuilder, BumpWrapper};
-use bumpalo::Bump;
+use hashbrown::HashMap;
 
-pub type BumpMap<'a, K, V> =
-    hashbrown::HashMap<K, V, DefaultHashBuilder, hashbrown::BumpWrapper<'a>>;
-
-const BUFFER_SIZE: usize = 65_536;
+const BUFFER_SIZE: usize = 131072;
 // set hashmap capacity to >= unique words, so we don't allocate again
 const HASHMAP_INITIAL_CAPACITY: usize = 65_536;
 
@@ -37,10 +33,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), Box<dyn Error>> {
-    let bump = Bump::new();
-    let wrapped = BumpWrapper(&bump);
-    let mut counts: BumpMap<Box<str>, usize> =
-        BumpMap::with_capacity_in(HASHMAP_INITIAL_CAPACITY, wrapped);
+    let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
     let mut in_buffer = BufReader::with_capacity(BUFFER_SIZE, io::stdin());
     let mut out_buffer = BufWriter::with_capacity(BUFFER_SIZE, io::stdout());
@@ -79,7 +72,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     })
 }
 
-fn increment(counts: &mut BumpMap<Box<str>, usize>, word: &str) {
+fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
     // using 'counts.entry' would be more idiomatic here, but doing so requires
     // allocating a new Vec<u8> because of its API. Instead, we do two hash
     // lookups, but in the exceptionally common case (we see a word we've
