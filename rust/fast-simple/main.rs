@@ -37,15 +37,21 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut out_buffer = BufWriter::with_capacity(BUFFER_SIZE, io::stdout());
 
     loop {
-        let buffer = in_buffer.fill_buf()?;
-        let buf_len = buffer.len();
-
-        if buffer.is_empty() {
+        let mut string_buffer = std::str::from_utf8(in_buffer.fill_buf()?)?.to_owned();
+        
+        // make sure we catch everything up to a new line
+        in_buffer.read_line(&mut string_buffer)?;
+        
+        // need to know how much we've read in total to consume() later
+        let buf_len = string_buffer.len();
+        
+        if string_buffer.is_empty() {
             break
         }
-
-        std::str::from_utf8(buffer)?
-            .to_ascii_lowercase()
+        
+        // don't need to worry about lines if we know
+        // the buffer terminates in a new line
+        string_buffer.to_ascii_lowercase()
             .split_ascii_whitespace()
             .for_each(|word| {
             increment(&mut counts, word)
