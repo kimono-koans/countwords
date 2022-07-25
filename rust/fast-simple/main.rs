@@ -39,11 +39,12 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     loop {
         // read into the buffer
         let mut bytes_buffer = in_buffer.fill_buf()?.to_vec();
-        // need to know how much we've read in total to consume() later
+        // need to know how much we've read in to consume() later
         let buf_len = bytes_buffer.len();
-        // finally consume() and get ready to fill_buf() again
+        // finally consume()
         in_buffer.consume(buf_len);
 
+        // these are auto-"consumed()" no need to add to the total buf_len
         let _num_additional_bytes = in_buffer.read_until(b'\n', &mut bytes_buffer)?;
 
         // break when there is nothing left to read
@@ -51,8 +52,8 @@ fn try_main() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        // don't need to worry about lines, if we know
-        // the buffer terminates in a new line
+        // don't need to worry about lines, if we know the buffer terminates in a new line
+        // and we are splitting on whitespace which includes newlines
         std::str::from_utf8(&bytes_buffer)?
             .to_ascii_lowercase()
             .split_ascii_whitespace()
