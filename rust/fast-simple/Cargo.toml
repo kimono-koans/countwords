@@ -9,4 +9,4 @@ name = "countwords"
 path = "main.rs"
 
 [dependencies]
-fxhash = "0.2.1"
+hashbrown = "0.12.3"

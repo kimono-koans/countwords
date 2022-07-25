@@ -8,7 +8,6 @@
 
 use std::{
     error::Error,
-    hash::BuildHasherDefault,
     io::{self, BufRead, BufReader, BufWriter, Write},
 };
 
@@ -20,7 +19,7 @@ use std::{
 //
 // N.B. This crate brings in a new hashing function. We still use std's hashmap
 // implementation.
-use fxhash::FxHashMap as HashMap;
+use hashbrown::HashMap;
 
 const BUFFER_SIZE: usize = 65_536;
 // set hashmap capacity to >= unique words, so we don't allocate again
@@ -34,8 +33,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), Box<dyn Error>> {
-    let hasher = BuildHasherDefault::default();
-    let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity_and_hasher(HASHMAP_INITIAL_CAPACITY, hasher);
+    let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
     let mut in_buffer = BufReader::with_capacity(BUFFER_SIZE, io::stdin());
     let mut out_buffer = BufWriter::with_capacity(BUFFER_SIZE, io::stdout());
@@ -58,11 +56,12 @@ fn try_main() -> Result<(), Box<dyn Error>> {
 
         // don't need to worry about lines, if we know the buffer terminates in a new line
         // and we are splitting on whitespace which includes newlines
-        // 
+        //
         // avoid allocating by using make_ascii_lowercase() and from_utf8_mut(), converts in place
         let s = std::str::from_utf8_mut(&mut bytes_buffer)?;
         s.make_ascii_lowercase();
-        s.split_ascii_whitespace().for_each(|word| increment(&mut counts, word));
+        s.split_ascii_whitespace()
+            .for_each(|word| increment(&mut counts, word));
     }
 
     let mut ordered: Vec<_> = counts.into_iter().collect();

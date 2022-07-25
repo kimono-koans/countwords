@@ -1,6 +1,9 @@
 {
     "cSpell.words": [
+        "allocs",
+        "countwords",
         "fxhash",
+        "hashbrown",
         "Hasher"
     ]
 }
