@@ -10,6 +10,3 @@ path = "main.rs"
 
 [dependencies]
 fxhash = "0.2.1"
-
-[profile.release]
-debug = true

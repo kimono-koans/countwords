@@ -31,7 +31,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), Box<dyn Error>> {
-    let mut counts: HashMap<String, u64> = HashMap::default();
+    let mut counts: HashMap<Box<str>, usize> = HashMap::default();
 
     let mut in_buffer = BufReader::with_capacity(BUFFER_SIZE, io::stdin());
     let mut out_buffer = BufWriter::with_capacity(BUFFER_SIZE, io::stdout());
@@ -68,7 +68,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     })
 }
 
-fn increment(counts: &mut HashMap<String, u64>, word: &str) {
+fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
     // using 'counts.entry' would be more idiomatic here, but doing so requires
     // allocating a new Vec<u8> because of its API. Instead, we do two hash
     // lookups, but in the exceptionally common case (we see a word we've
@@ -77,5 +77,5 @@ fn increment(counts: &mut HashMap<String, u64>, word: &str) {
         *count += 1;
         return;
     }
-    counts.insert(word.to_owned(), 1);
+    counts.insert(Box::<str>::from(word), 1);
 }
