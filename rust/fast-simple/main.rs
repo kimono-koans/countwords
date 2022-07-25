@@ -81,5 +81,5 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
         *count += 1;
         return;
     }
-    counts.insert(Box::<str>::from(word), 1);
+    counts.insert_unique_unchecked(Box::<str>::from(word), 1);
 }
