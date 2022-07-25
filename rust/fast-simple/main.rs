@@ -8,7 +8,7 @@
 
 use std::{
     error::Error,
-    io::{self, BufWriter, BufRead, Write, BufReader},
+    io::{self, BufRead, BufReader, BufWriter, Write},
 };
 
 // std uses a cryptographically secure hashing algorithm by default, which is
@@ -38,37 +38,33 @@ fn try_main() -> Result<(), Box<dyn Error>> {
 
     loop {
         let mut string_buffer = std::str::from_utf8(in_buffer.fill_buf()?)?.to_owned();
-        
+
         // make sure we catch everything up to a new line
         in_buffer.read_line(&mut string_buffer)?;
-        
+
         // need to know how much we've read in total to consume() later
         let buf_len = string_buffer.len();
-        
+
         if string_buffer.is_empty() {
-            break
+            break;
         }
-        
-        // don't need to worry about lines if we know
+
+        // don't need to worry about lines, if we know
         // the buffer terminates in a new line
-        string_buffer.to_ascii_lowercase()
+        string_buffer
+            .to_ascii_lowercase()
             .split_ascii_whitespace()
-            .for_each(|word| {
-            increment(&mut counts, word)
-        });
-        
+            .for_each(|word| increment(&mut counts, word));
+
         in_buffer.consume(buf_len);
     }
 
     let mut ordered: Vec<_> = counts.into_iter().collect();
     ordered.sort_unstable_by_key(|&(_, count)| count);
 
-    ordered
-        .into_iter()
-        .rev()
-        .try_for_each(|(word, count)| {
-            writeln!(out_buffer, "{} {}", word, count).map_err(|err| err.into())
-        })
+    ordered.into_iter().rev().try_for_each(|(word, count)| {
+        writeln!(out_buffer, "{} {}", word, count).map_err(|err| err.into())
+    })
 }
 
 fn increment(counts: &mut HashMap<String, u64>, word: &str) {
