@@ -57,8 +57,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     loop {
         // first, read lots of bytes into the buffer
         let mut bytes_buffer = in_buffer.fill_buf()?.to_vec();
-        let buf_len = bytes_buffer.len();
-        in_buffer.consume(buf_len);
+        in_buffer.consume(bytes_buffer.len());
 
         // now, keep reading to make sure we haven't stopped in the middle of a word.
         // no need to add the bytes to the total buf_len, as these bytes are auto-"consumed()",
