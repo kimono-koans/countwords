@@ -71,8 +71,8 @@ fn try_main() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        // make_ascii_lowercase on str requires a call to as_bytes(), so use here on
-        // directly bytes, but there doesn't seem to be perf advantage
+        // make_ascii_lowercase on str requires a call to as_bytes(), so we use directly
+        // on bytes here, but there doesn't seem to be a perf advantage
         bytes_buffer.make_ascii_lowercase();
 
         // make_ascii_lowercase(), above, and from_utf8_mut(), both convert in place
@@ -107,7 +107,7 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
     // already seen), we only do one and without any allocs.
     //
     // Update, RBS 07/26/2022: insert_unique_unchecked() allows us to avoid
-    // duplicating hashmap lookups, while avoiding the additional alloc of entry.
+    // duplicating hashmap lookups, while avoiding the additional alloc of an entry.
     // Optimized stores keys as Vec<u8>.  Here, we've already converted to &str,
     // so we Box and save 8 bytes per key compared to storing as a String
     match counts.get_mut(word) {
