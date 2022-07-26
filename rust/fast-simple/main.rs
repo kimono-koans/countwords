@@ -23,15 +23,17 @@ use std::{
 // Update, RBS 07/26/2022: Since Rust 1.36, hashbrown is the new hashmap impl of the
 // stdlib, but this crate includes an additional method, insert_unique_unchecked(),
 // which allows us to avoid duplicating hashmap lookups, while avoiding the
-// additional alloc of entry().  Moreover, ahash is hash function of hashbrown which
-// is slightly slower than fxhash when used with the stdlib hashmap, but which is
-// slightly faster as used here.
+// additional alloc of entry().  Moreover, ahash is the hash function of hashbrown,
+// which is slightly slower than fxhash when used with the stdlib hashmap, but which
+// is slightly faster as used here.
 use hashbrown::HashMap;
 
-// this buffer size seems to be slightly faster than 65_536
-const BUFFER_SIZE: usize = 131_072;
+// this in buffer size seems to be slightly faster than 65_536
+const IN_BUFFER_SIZE: usize = 131_072;
+// this out buffer size seems to be slightly faster than 65_536
+const OUT_BUFFER_SIZE: usize = 32_768;
 // set hashmap capacity to >= unique words, so we don't allocate again
-const HASHMAP_INITIAL_CAPACITY: usize = 65_536;
+const HASHMAP_INITIAL_CAPACITY: usize = 32_768;
 
 fn main() {
     if let Err(err) = try_main() {
@@ -48,8 +50,8 @@ fn main() {
 fn try_main() -> Result<(), Box<dyn Error>> {
     let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
-    let mut in_buffer = BufReader::with_capacity(BUFFER_SIZE, io::stdin());
-    let mut out_buffer = BufWriter::with_capacity(BUFFER_SIZE, io::stdout());
+    let mut in_buffer = BufReader::with_capacity(IN_BUFFER_SIZE, io::stdin());
+    let mut out_buffer = BufWriter::with_capacity(OUT_BUFFER_SIZE, io::stdout());
 
     // in contrast with the simple/naive version, whole idea is to work on a much larger
     // number of bytes, therefore we should avoid manipulating small buffers, like those
@@ -62,7 +64,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         // now, keep reading to make sure we haven't stopped in the middle of a word.
         // no need to add the bytes to the total buf_len, as these bytes are auto-"consumed()",
         // and bytes_buffer will be extended from slice to accommodate the new bytes
-        let _num_additional_bytes = in_buffer.read_until(b'\n', &mut bytes_buffer)?;
+        in_buffer.read_until(b'\n', &mut bytes_buffer)?;
 
         // break when there is nothing left to read
         if bytes_buffer.is_empty() {
