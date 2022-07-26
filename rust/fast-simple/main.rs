@@ -47,7 +47,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         in_buffer.consume(buf_len);
 
         // these are auto-"consumed()" no need to add to the total buf_len
-        // and the bytes buffer will extend_from_slice to accommodate
+        // and the bytes_buffer will extend_from_slice to accommodate
         let _num_additional_bytes = in_buffer.read_until(b'\n', &mut bytes_buffer)?;
 
         // break when there is nothing left to read
