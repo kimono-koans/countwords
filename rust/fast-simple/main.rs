@@ -54,13 +54,16 @@ fn try_main() -> Result<(), Box<dyn Error>> {
             break;
         }
 
+        // make_ascii_lowercase on str requires a call to as_bytes
+        // why not just use on bytes
+        bytes_buffer.make_ascii_lowercase();
+
         // don't need to worry about lines, if we know the buffer terminates in a new line
         // and we are splitting on whitespace which includes newlines
         //
         // avoid allocating by using make_ascii_lowercase() and from_utf8_mut(), converts in place
-        let s = std::str::from_utf8_mut(&mut bytes_buffer)?;
-        s.make_ascii_lowercase();
-        s.split_ascii_whitespace()
+        std::str::from_utf8_mut(&mut bytes_buffer)?
+            .split_ascii_whitespace()
             .for_each(|word| increment(&mut counts, word));
     }
 
@@ -77,9 +80,13 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
     // allocating a new Vec<u8> because of its API. Instead, we do two hash
     // lookups, but in the exceptionally common case (we see a word we've
     // already seen), we only do one and without any allocs.
-    if let Some(count) = counts.get_mut(word) {
-        *count += 1;
-        return;
+    match counts.get_mut(word) {
+        Some(count) => {
+            *count += 1;
+        }
+        None => {
+            // safe because we check for the key just above
+            counts.insert_unique_unchecked(Box::from(word), 1);
+        }
     }
-    counts.insert_unique_unchecked(Box::from(word), 1);
 }
