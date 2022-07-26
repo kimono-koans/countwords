@@ -30,7 +30,7 @@ use std::{
 use hashbrown::HashMap;
 
 // attempt to use threading
-use crossbeam::channel::{unbounded, Sender};
+use crossbeam::channel::{unbounded, Receiver, Sender};
 
 // this in buffer size seems to be slightly faster than 65_536
 const IN_BUFFER_SIZE: usize = 131_072;
@@ -61,16 +61,19 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     // number of bytes, therefore we should avoid manipulating small buffers, like those
     // created by lines(), as much as we can, and to avoid allocating as much as possible
 
-    let (tx, rx) = unbounded();
+    let (tx1, rx1) = unbounded();
+    let (tx2, rx2) = unbounded();
 
     thread::spawn(move || {
-        let _ = ready_bytes_buffer(&mut in_buffer, tx);
+        let _ = ready_bytes_buffer(&mut in_buffer, tx1);
     });
 
-    while let Ok(mut bytes_buffer) = rx.recv() {
-        std::str::from_utf8_mut(&mut bytes_buffer)?
-            .split_ascii_whitespace()
-            .for_each(|word| increment(&mut counts, word));
+    thread::spawn(move || {
+        let _ = ready_words(rx1, tx2);
+    });
+
+    while let Ok(word) = rx2.recv() {
+        increment(&mut counts, word);
     }
 
     let mut ordered: Vec<_> = counts.into_iter().collect();
@@ -90,6 +93,16 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         }
         Err(err) => Err(err.into()),
     }
+}
+
+fn ready_words(rx: Receiver<Vec<u8>>, tx: Sender<Box<str>>) -> Result<(), Box<dyn Error>> {
+    while let Ok(mut bytes_buffer) = rx.recv() {
+        let _ = std::str::from_utf8_mut(&mut bytes_buffer)?
+            .split_ascii_whitespace()
+            .try_for_each(|word| tx.send(Box::from(word)));
+    }
+
+    Ok(())
 }
 
 fn ready_bytes_buffer(
@@ -121,7 +134,7 @@ fn ready_bytes_buffer(
     Ok(())
 }
 
-fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
+fn increment(counts: &mut HashMap<Box<str>, usize>, word: Box<str>) {
     // using 'counts.entry' would be more idiomatic here, but doing so requires
     // allocating a new Vec<u8> because of its API. Instead, we do two hash
     // lookups, but in the exceptionally common case (we see a word we've
@@ -131,13 +144,13 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
     // duplicating hashmap lookups, while avoiding the additional alloc of entry.
     // Optimized stores keys as Vec<u8>.  Here, we've already converted to &str,
     // so we Box and save 8 bytes per key compared to storing as a String
-    match counts.get_mut(word) {
+    match counts.get_mut(&word) {
         Some(count) => {
             *count += 1;
         }
         None => {
             // safe because we check for the key just above
-            counts.insert_unique_unchecked(Box::from(word), 1);
+            counts.insert_unique_unchecked(word, 1);
         }
     }
 }
