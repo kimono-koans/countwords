@@ -21,7 +21,7 @@ use std::{
 // implementation.
 use hashbrown::HashMap;
 
-const BUFFER_SIZE: usize = 131072;
+const BUFFER_SIZE: usize = 131_072;
 // set hashmap capacity to >= unique words, so we don't allocate again
 const HASHMAP_INITIAL_CAPACITY: usize = 65_536;
 

@@ -8,7 +8,7 @@
 
 use std::{
     error::Error,
-    io::{self, BufWriter, Read, Write},
+    io::{self, Read, Write},
 };
 
 // std uses a cryptographically secure hashing algorithm by default, which is
@@ -35,23 +35,19 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut buf = vec![0; 64 * (1 << 10)];
     let mut offset = 0;
     let mut start = None;
-    let mut out_buffer = BufWriter::new(io::stdout());
-
     loop {
-        let n_read = stdin.read(&mut buf[offset..])?;
-
-        if n_read == 0 {
+        let nread = stdin.read(&mut buf[offset..])?;
+        if nread == 0 {
             if offset > 0 {
                 increment(&mut counts, &buf[..offset + 1]);
             }
             break;
         }
+        let buf = &mut buf[..offset + nread];
 
-        let buf = &mut buf[..offset + n_read];
-
-        (0..buf.len()).skip(offset).for_each(|i| {
+        for i in (0..buf.len()).skip(offset) {
             let b = buf[i];
-            if (b'A'..=b'Z').contains(&b) {
+            if b'A' <= b && b <= b'Z' {
                 buf[i] += b'a' - b'A';
             }
             if b == b' ' || b == b'\n' {
@@ -61,8 +57,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
             } else if start.is_none() {
                 start = Some(i);
             }
-        });
-
+        }
         if let Some(ref mut start) = start {
             offset = buf.len() - *start;
             buf.copy_within(*start.., 0);
@@ -75,16 +70,10 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut ordered: Vec<_> = counts.into_iter().collect();
     ordered.sort_unstable_by_key(|&(_, count)| count);
 
-    ordered
-        .into_iter()
-        .rev()
-        .try_for_each(|(word, count)| match std::str::from_utf8(&word) {
-            Ok(word_str) => match writeln!(out_buffer, "{} {}", word_str, count) {
-                Ok(_) => Ok(()),
-                Err(e) => Err(Box::new(e).into()),
-            },
-            Err(e) => Err(Box::new(e).into()),
-        })
+    for (word, count) in ordered.into_iter().rev() {
+        writeln!(io::stdout(), "{} {}", std::str::from_utf8(&word)?, count)?;
+    }
+    Ok(())
 }
 
 fn increment(counts: &mut HashMap<Vec<u8>, u64>, word: &[u8]) {
