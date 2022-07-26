@@ -47,6 +47,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         in_buffer.consume(buf_len);
 
         // these are auto-"consumed()" no need to add to the total buf_len
+        // and the bytes buffer will extend_from_slice to accommodate
         let _num_additional_bytes = in_buffer.read_until(b'\n', &mut bytes_buffer)?;
 
         // break when there is nothing left to read
@@ -55,13 +56,13 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         }
 
         // make_ascii_lowercase on str requires a call to as_bytes
-        // why not just use on bytes
+        // so we use here on bytes, but there doesn't seem to be perf advantage
         bytes_buffer.make_ascii_lowercase();
 
-        // don't need to worry about lines, if we know the buffer terminates in a new line
+        // don't need to worry about lines, if we know the buffer terminates in a newline
         // and we are splitting on whitespace which includes newlines
         //
-        // avoid allocating by using make_ascii_lowercase() and from_utf8_mut(), converts in place
+        // avoid allocating by using make_ascii_lowercase() and from_utf8_mut(), which converts in place
         std::str::from_utf8_mut(&mut bytes_buffer)?
             .split_ascii_whitespace()
             .for_each(|word| increment(&mut counts, word));
@@ -70,9 +71,19 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut ordered: Vec<_> = counts.into_iter().collect();
     ordered.sort_unstable_by_key(|&(_, count)| count);
 
-    ordered.into_iter().rev().try_for_each(|(word, count)| {
-        writeln!(out_buffer, "{} {}", word, count).map_err(|err| err.into())
-    })
+    let ret = ordered
+        .into_iter()
+        .rev()
+        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count));
+
+    match ret {
+        Ok(_) => {
+            // docs say its critical to do a flush before drop
+            out_buffer.flush()?;
+            Ok(())
+        }
+        Err(err) => Err(err.into()),
+    }
 }
 
 fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
