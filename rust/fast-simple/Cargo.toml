@@ -9,4 +9,4 @@ name = "countwords"
 path = "main.rs"
 
 [dependencies]
-hashbrown = { version = "0.12.3", features = ["bumpalo"] }
+hashbrown = { version = "0.12.3" }
