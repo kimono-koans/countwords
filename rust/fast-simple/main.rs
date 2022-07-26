@@ -84,20 +84,14 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut ordered: Vec<_> = counts.into_iter().collect();
     ordered.sort_unstable_by_key(|&(_, count)| count);
 
-    let ret = ordered
-        .into_iter()
+    ordered
+        .iter()
         .rev()
-        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count));
-
-    match ret {
-        Ok(_) => {
-            // docs say its critical to do a flush before drop
-            // so we flush here at the last moment
+        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count))
+        .map(|_| {
             out_buffer.flush()?;
             Ok(())
-        }
-        Err(err) => Err(err.into()),
-    }
+        })?
 }
 
 fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
