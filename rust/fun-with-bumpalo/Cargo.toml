@@ -1,0 +1,13 @@
+[package]
+name = "optimized"
+version = "0.1.0"
+authors = ["Andrew Gallant <jamslam@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "countwords"
+path = "main.rs"
+
+[dependencies]
+hashbrown = { version = "0.12.3", features =["bumpalo"] }
+bumpalo = { version = "3.9", features = ["allocator_api"] } 
