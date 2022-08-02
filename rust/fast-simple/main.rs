@@ -5,7 +5,6 @@
 //
 // There's nothing particularly interesting here other than swapping out std's
 // default hashing algorithm for one that isn't cryptographically secure.
-
 use std::{
     error::Error,
     io::{self, BufRead, BufReader, BufWriter, Write},
@@ -89,7 +88,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     ordered.sort_unstable_by_key(|&(_, count)| count);
 
     ordered
-        .iter()
+        .into_iter()
         .rev()
         .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count))
         .map(|_| {
