@@ -9,7 +9,7 @@
 // default hashing algorithm for one that isn't cryptographically secure.
 use std::{
     error::Error,
-    io::{self, BufRead, BufReader, BufWriter, Write},
+    io::{self, BufRead, BufReader, BufWriter, Write}, alloc::Allocator,
 };
 
 // std uses a cryptographically secure hashing algorithm by default, which is
@@ -31,6 +31,8 @@ use bumpalo::Bump;
 use hashbrown::{hash_map::DefaultHashBuilder, BumpWrapper};
 
 pub type BumpWrapMap<K, V, BumpWrapper> = hashbrown::HashMap<K, V, DefaultHashBuilder, BumpWrapper>;
+pub type Vec<T> = std::vec::Vec<T, Bump>;
+
 
 // this in buffer size seems to be slightly faster than 65_536
 const IN_BUFFER_SIZE: usize = 131_072;
@@ -70,9 +72,9 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         // now, keep reading to make sure we haven't stopped in the middle of a word.
         // no need to add the bytes to the total buf_len, as these bytes are auto-"consumed()",
         // and bytes_buffer will be extended from slice to accommodate the new bytes
-        let mut tmp: Vec<u8> = Vec::new();
-        in_buffer.read_until(b'\n', &mut tmp)?;
-        bytes_buffer.extend_from_slice(tmp.as_slice());
+        //let mut tmp: Vec<u8> = Vec::new();
+        in_buffer.read_until(b'\n', &mut bytes_buffer)?;
+        //bytes_buffer.extend_from_slice(tmp.as_slice());
 
         // break when there is nothing left to read
         if bytes_buffer.is_empty() {
