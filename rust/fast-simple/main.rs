@@ -90,11 +90,9 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     ordered
         .into_iter()
         .rev()
-        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count))
-        .map(|_| {
-            out_buffer.flush()?;
-            Ok(())
-        })?
+        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count))?;
+
+    out_buffer.flush().map_err(|err| err.into())
 }
 
 fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
