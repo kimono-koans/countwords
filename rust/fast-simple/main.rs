@@ -74,7 +74,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        // make_ascii_lowercase on str requires a call to as_bytes(), so we use directly
+        // to_ascii_lowercase on str requires a call to as_bytes(), so we use directly
         // on bytes here, but there doesn't seem to be a perf advantage
         bytes_buffer.make_ascii_lowercase();
 
