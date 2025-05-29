@@ -47,8 +47,8 @@ fn main() {
 // turned out to be much faster than the optimized version on MacOS/M1 and similar in performance to the
 // optimized version on the x86_64/Linux
 #[allow(unused_assignments)]
-fn try_main() -> Result<(), Box<dyn Error>> {
-    let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
+fn try_main<'a>() -> Result<(), Box<dyn Error>> {
+    let mut counts: HashMap<&'a str, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
     let mut in_buffer = BufReader::with_capacity(IN_BUFFER_SIZE, io::stdin());
     let mut out_buffer = BufWriter::with_capacity(OUT_BUFFER_SIZE, io::stdout());
@@ -78,8 +78,10 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         // on bytes here, but there doesn't seem to be a perf advantage
         bytes_buffer.make_ascii_lowercase();
 
+        let leaked: &'a mut [u8] = Vec::leak(bytes_buffer);
+
         // make_ascii_lowercase(), above, and from_utf8_mut(), both convert in place
-        std::str::from_utf8_mut(&mut bytes_buffer)?
+        std::str::from_utf8(leaked)?
             .split_ascii_whitespace()
             .for_each(|word| increment(&mut counts, word));
     }
@@ -95,7 +97,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     out_buffer.flush().map_err(|err| err.into())
 }
 
-fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
+fn increment<'a>(counts: &mut HashMap<&'a str, usize>, word: &'a str) {
     // using 'counts.entry' would be more idiomatic here, but doing so requires
     // allocating a new Vec<u8> because of its API. Instead, we do two hash
     // lookups, but in the exceptionally common case (we see a word we've
@@ -111,7 +113,7 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
         }
         None => {
             // safe because we check for the key just above
-            counts.insert_unique_unchecked(Box::from(word), 1);
+            counts.insert_unique_unchecked(word, 1);
         }
     }
 }
