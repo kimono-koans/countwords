@@ -110,8 +110,8 @@ fn increment(counts: &mut HashMap<Box<str>, usize>, word: &str) {
             *count += 1;
         }
         None => {
-            // safe because we check for the key just above
-            counts.insert_unique_unchecked(Box::from(word), 1);
+            // SAFETY: we check for the key just above
+            unsafe { counts.insert_unique_unchecked(Box::from(word), 1) };
         }
     }
 }
