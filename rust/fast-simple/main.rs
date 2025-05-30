@@ -41,11 +41,10 @@ fn main() {
     }
 }
 
-// Update, RBS 07/26/2022: Meat of the changes made are about trying to do something similar to
-// the optimized version without doing anything unsafe/unchecked, which feels like readable, relatively
-// understandable/simple, idiomatic Rust (nothing too galaxy brained).  This has, surprisingly,
-// turned out to be much faster than the optimized version on MacOS/M1 and similar in performance to the
-// optimized version on the x86_64/Linux
+// Update, RBS 05/30/2025: Meat of the changes made are about trying to do something similar to
+// the optimized version, which feels like readable, relatively understandable/simple, idiomatic Rust
+// (nothing too galaxy brained).  This has, surprisingly, turned out to be much faster than the optimized
+// version on MacOS/M1 and similar in performance to the optimized version on the x86_64/Linux
 fn try_main() -> Result<(), Box<dyn Error>> {
     let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
@@ -74,9 +73,10 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         // on bytes here, but there doesn't seem to be a perf advantage
         bytes_buffer.make_ascii_lowercase();
 
-        // make_ascii_lowercase(), above, and from_utf8_mut(), both convert in place
-        std::str::from_utf8_mut(&mut bytes_buffer)?
-            .split_ascii_whitespace()
+        bytes_buffer
+            .split(|byte| !byte.is_ascii_alphabetic() || byte.is_ascii_whitespace())
+            .filter(|bytes| !bytes.is_empty())
+            .map(|bytes| unsafe { std::str::from_utf8_unchecked(bytes) })
             .for_each(|word| increment(&mut counts, word));
     }
 
@@ -86,7 +86,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     ordered
         .into_iter()
         .rev()
-        .try_for_each(|(word, count)| writeln!(out_buffer, "{} {}", word, count))?;
+        .try_for_each(|(word, count)| writeln!(out_buffer, "{} : {}", word, count))?;
 
     out_buffer.flush()?;
 
