@@ -74,7 +74,7 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         bytes_buffer.make_ascii_lowercase();
 
         bytes_buffer
-            .split(|byte| !byte.is_ascii_alphabetic() || byte.is_ascii_whitespace())
+            .split(|byte| !byte.is_ascii_alphabetic())
             .filter(|bytes| !bytes.is_empty())
             .map(|bytes| unsafe { std::str::from_utf8_unchecked(bytes) })
             .for_each(|word| increment(&mut counts, word));
