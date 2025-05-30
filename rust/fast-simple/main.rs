@@ -46,22 +46,18 @@ fn main() {
 // understandable/simple, idiomatic Rust (nothing too galaxy brained).  This has, surprisingly,
 // turned out to be much faster than the optimized version on MacOS/M1 and similar in performance to the
 // optimized version on the x86_64/Linux
-#[allow(unused_assignments)]
 fn try_main() -> Result<(), Box<dyn Error>> {
     let mut counts: HashMap<Box<str>, usize> = HashMap::with_capacity(HASHMAP_INITIAL_CAPACITY);
 
     let mut in_buffer = BufReader::with_capacity(IN_BUFFER_SIZE, io::stdin());
     let mut out_buffer = BufWriter::with_capacity(OUT_BUFFER_SIZE, io::stdout());
 
-    // good for a few ms/% speed bump vs C, with_capacity() actually makes it slower!
-    let mut bytes_buffer = Vec::new();
-
     // in contrast with the simple/naive version, whole idea is to work on a much larger
     // number of bytes, therefore we should avoid manipulating small buffers, like those
     // created by lines(), as much as we can, and to avoid allocating as much as possible
     loop {
         // first, read lots of bytes into the buffer
-        bytes_buffer = in_buffer.fill_buf()?.to_vec();
+        let mut bytes_buffer = in_buffer.fill_buf()?.to_vec();
         in_buffer.consume(bytes_buffer.len());
 
         // now, keep reading to make sure we haven't stopped in the middle of a word.
